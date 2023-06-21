@@ -8,7 +8,23 @@
 // B7: Sau khi xử lí phân tách xong thì quay về với bước B3, kết hợp với B4 thay value(rules) thành các
 // hàm mà B4 đã tạo sẵn, lưu ý là sẽ tạo ra một mảng để chứa các value(rules) trong key(name)
 // chú ý đến các trong min. max phải xử lí thêm
+// B8: Lắng nghe sự kiện để validate (blur, change)
+// 8.1 Lọc qua các rule của từng input để kiểm tra xem validatorRules có thoả mãn hay không rules
+// 8.2 In ra màn hinh màu đỏ nếu như value truyền vào validatorRules bị sai errorMessage
+// 8.3 Lấy được thẻ cha (form-group) của mỗi input || formGroup
+// 8.4 Truy cập vào phần form-message để in ra màn hình dưới thẻ input  || alertMessageError
+// B9: Hành động submit
 function Validator(formSelector) {
+    // Lấy phần tử cha 
+    function getParent(sonselector, parentselector) {
+        while (sonselector.parentElement) {
+            if (sonselector.parentElement.matches(parentselector)) {
+                return sonselector.parentElement
+            }
+            sonselector = sonselector.parentElement
+        }
+    }
+
     var formRules = {
         // nguyện vọng là truyền 
         // fullname: 'required',
@@ -22,7 +38,7 @@ function Validator(formSelector) {
         },
         email: function (value) {
             var regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-            return regex.test(value) ? undefined : 'Vui lòng nhập trường này'
+            return regex.test(value) ? undefined : 'Hãy nhập đúng email'
         },
         min: function (min) {
             return function (value) {
@@ -75,8 +91,52 @@ function Validator(formSelector) {
                     formRules[input.name] = [ruleFunc]
                 }
             }
+            input.onblur = handleValidate;
+            input.oninput = handleClearMessage;
         }
+        // Hàm thực hiện validate
+        function handleValidate(event) {
+            // lấy các rules từ bằng cách truy cập vào event.target.name
+            var rules = formRules[event.target.name];
+            // Hàm some sẽ kiểm tra từng rule xem có thoả mãn với validatorRules hay không
+            var errorMessage
+            // Bây giờ rule sẽ là các function trong validatorRules, với các function được chứa trong mỗi input
+            rules.some(function (rule) {
+                return errorMessage = rule(event.target.value)
+            })
+            if (errorMessage) {
+                // Lấy được thẻ cha của mỗi input
+                var formGroup = getParent(event.target, '.form-group')
+                // Trỏ đến phần bên dưới của mỗi thẻ input để in ra lỗi
+                var alertMessageError = formGroup.querySelector('.form-message')
+                if (alertMessageError) {
+                    formGroup.classList.add('invalid')
+                    alertMessageError.innerText = errorMessage
+                }
+            }
+        }
+        function handleClearMessage(event){
+            // Kiểm tra xem nếu như fom-group nào có invalid thì loại bỏ nó
+            var formGroup = getParent(event.target, '.form-group')
+            if (formGroup.classList.contains('invalid')){
+                formGroup.classList.remove('invalid')
+            }
+            // Truy cập vào phần in ra màn hình để xoá đi
+            var alertMessageError = formGroup.querySelector('.form-message')
+            if (alertMessageError){
+                alertMessageError.innerText = ''
 
+            }
+        }
     }
-    console.log('formRules', formRules);
+    formElement.onsubmit = function(event){
+        event.preventDefault()
+        // Lọc qua lại tất cả inputs bên trong form
+        var inputs = formElement.querySelectorAll('[name][rules]')
+        for (let input of inputs) {
+            handleValidate({
+                target: input
+            })
+        }
+    }
 }
