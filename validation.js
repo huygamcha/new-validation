@@ -14,6 +14,8 @@
 // 8.3 Lấy được thẻ cha (form-group) của mỗi input || formGroup
 // 8.4 Truy cập vào phần form-message để in ra màn hình dưới thẻ input  || alertMessageError
 // B9: Hành động submit
+// Xử lí đoạn object
+// Xử lí true hoặc false
 function Validator(formSelector) {
     // Lấy phần tử cha 
     function getParent(sonselector, parentselector) {
@@ -57,7 +59,7 @@ function Validator(formSelector) {
     if (formElement) {
         var inputs = formElement.querySelectorAll('[name][rules]')
 
-        // 
+        // Xử lí tất cả các rule trong từng input
         for (let input of inputs) {
             formRules[input.name] = input.getAttribute('rules')
 
@@ -114,29 +116,81 @@ function Validator(formSelector) {
                     alertMessageError.innerText = errorMessage
                 }
             }
+            return !errorMessage
         }
-        function handleClearMessage(event){
+        function handleClearMessage(event) {
             // Kiểm tra xem nếu như fom-group nào có invalid thì loại bỏ nó
             var formGroup = getParent(event.target, '.form-group')
-            if (formGroup.classList.contains('invalid')){
+            if (formGroup.classList.contains('invalid')) {
                 formGroup.classList.remove('invalid')
             }
             // Truy cập vào phần in ra màn hình để xoá đi
             var alertMessageError = formGroup.querySelector('.form-message')
-            if (alertMessageError){
+            if (alertMessageError) {
                 alertMessageError.innerText = ''
 
             }
         }
     }
-    formElement.onsubmit = function(event){
+    // Viết theo kiểu ES6 nên là không cần quan tâm đến lỗi this(xem trong bài 204)
+    formElement.onsubmit = (event) => {
         event.preventDefault()
+
         // Lọc qua lại tất cả inputs bên trong form
         var inputs = formElement.querySelectorAll('[name][rules]')
+        isValid = true;
         for (let input of inputs) {
-            handleValidate({
-                target: input
-            })
+            // với như thế này thì event sẽ là {target:input}
+            // trong dòng var rules = formRules[event.target.name];
+            // thì event.target sẽ lấy được input
+            if (!handleValidate({ target: input })
+            ) {
+                isValid = false;
+            }
+        }
+        if (isValid) {
+            // với this chính là lấy hàm Validator
+            // sau đó sử dụng Validator với function và onSubmit
+            if (typeof this.onSubmit === 'function') {
+                // select tất cả các field là name
+                var enableInput = formElement.querySelectorAll('[name]')
+                // vì enableInput trả về nodelist nên phải chuyển sang Array để sử dụng reduce
+                var listsubmit = Array.from(enableInput).reduce(function (values, input) {
+                    // nhưng đoạn mã bên dưới sẽ không in ra gì hết(giải thích ở video 200) nếu như ta nhập thiếu một trường
+                    // return (values[input.name] = input.value) && values
+                    // nên ta sử dụng đoạn mã sau
+
+                    // kiểm tra kiểu của từng loại, chứ không sẽ bug ở phần lấy value của phần radio
+                    switch (input.type) {
+                        case 'radio':
+                            values[input.name] = formElement.querySelector('input[name="' + input.name + '"]:checked').value;
+                            break;
+                        case 'checkbox':
+                            // kiêm tra xem nếu chưa được check(tức là cái sẽ ko lấy giá trị sẽ trả về values như thông thường)
+                            if (!input.matches(':checked')) return values
+                            // nếu input ở kiểu checked thì gán cho nó thành một mảng
+                            if (!Array.isArray(values[input.name])) {
+                                values[input.name] = []
+                            }
+                            // đoạn này sẽ cập nhật cái input đó vào mảng vừa tạo
+                            values[input.name].push(input.value)
+                            break;
+                        case 'file':
+                            values[input.name] = input.files
+                            break;
+                        default:
+                            values[input.name] = input.value
+                    }
+                    return values
+                    // với việc truyền object thì values sẽ nhận giá trị là object
+                }, {})
+
+                // gọi lại hàm onSubmit và trả về giá trị 
+                this.onSubmit(listsubmit)
+            }
+            else {
+                formElement.submit();
+            }
         }
     }
 }

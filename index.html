@@ -20,15 +20,15 @@
 
       <div class="form-group">
         <label for="fullname" class="form-label">Tên đầy đủ</label>
-        <input  id="fullname" name="fullname" type="text" rules="required" placeholder="VD: Sơn Đặng"
+        <input id="fullname" name="fullname" type="text" rules="required" placeholder="VD: Sơn Đặng"
           class="form-control">
         <span class="form-message"></span>
       </div>
 
       <div class="form-group">
         <label for="email" class="form-label">Email</label>
-        <input autocomplete="'off" id="email" name="email" type="text" rules="required|email" placeholder="VD: email@domain.com"
-          class="form-control">
+        <input autocomplete="'off" id="email" name="email" type="text" rules="required|email"
+          placeholder="VD: email@domain.com" class="form-control">
         <span class="form-message"></span>
       </div>
 
@@ -62,7 +62,7 @@
 
         <span class="form-message"></span>
       </div> -->
-<!-- 
+      <!-- 
       <div class="form-group">
         <label class="form-label">Chọn giới tính</label>
         <div class="form-grop-gender">
@@ -84,7 +84,11 @@
   <script src="validation.js">
   </script>
   <script>
-    Validator('#form-2')
+
+    var form = new Validator('#form-2')
+    // form.onSubmit = function (formData) {
+    //   console.log('formData', formData);
+    // }
   </script>
 
 </body>
